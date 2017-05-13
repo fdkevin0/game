@@ -7,6 +7,7 @@
 <style>
 body {
   background: #222;
+  font-size: 1em;
 }
 
 h2 {
@@ -16,7 +17,7 @@ h2 {
 }
 
 .background {
-  table-layout: fixed;
+  table-layout: auto;
   border-spacing: 0;
 }
 
@@ -461,7 +462,7 @@ Player.prototype.moveX = function(step, level, keys) {
 		this.pos = newPos;
 };
 
-var gravity = 30;
+var gravity = 10;
 var jumpSpeed = 17;
 
 Player.prototype.moveY = function(step, level, keys) {
