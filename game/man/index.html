@@ -63,7 +63,7 @@ h2 {
 </style>
 </head>
 <body>
-
+<h2>游戏</h2>
 
 <script>
 var LEVELS = [
@@ -597,11 +597,16 @@ function runLevel(level, Display, andThen) {
 	});
 }
 
-function runGame(plans, Display) {
-	function startLevel(n) {
-		runLevel(new Level(plans[n]), Display, function(status) {
-			if (status == "lost")
+function runGame(plans, Display)
+{
+	function startLevel(n)
+	{
+		runLevel(new Level(plans[n]), Display, function(status)
+		{
+			if (status == "lost" && n == 0)
 				startLevel(4);
+			else if (status == "lost")
+				startLevel(n);
 			else if (n < plans.length - 1)
 				startLevel(n + 1);
 			else
