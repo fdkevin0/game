@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>飞机大战</title>
+	<meta name="keywords" content="飞机大战,h5小游戏" />
+	<meta name="description" content="飞机大战demo" />
+	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+	<meta name="Author" content="FE(QQ:413216577)" />
+	<meta content="yes" name="apple-mobile-web-app-capable"/>
+	<meta content="yes" name="apple-touch-fullscreen"/>
+	<meta content="telephone=no,email=no" name="format-detection"/>
+	<style>
+		body, p {
+			margin:0;
+			padding:0;
+		}
+		body {
+			width:100%;
+			height:100%;
+			overflow:hidden;
+			font-family: "Microsoft Yahei"
+		}
+		#mian {
+			width:100%;
+			height:100%;
+		}
+		#canvas {
+			background:#111;
+		}
+		#start {
+			width:160px;
+			height:50px;
+			box-shadow: 0 0 5px rgb(50,255,50);
+			text-align:center;
+			line-height:50px;
+			font-size:26px;
+			text-shadow:0 0 10px rgb(50,255,50);
+			position:absolute;
+			top:50%;
+			left:50%;
+			margin-top:-25px;
+			margin-left:-80px;
+			color:rgba(255,255,255,0.8);
+			border-radius:5px;
+			border:1px solid #aaa;
+			cursor:pointer;
+			-moz-user-select:none;
+			-webkit-user-select:none;
+			-ms-user-select:none;
+			user-select:none;
+		}
+		#start:hover {
+			box-shadow: 0 0 10px rgb(50,255,50);
+		}
+		#start:active {
+			box-shadow: 0 0 10px rgb(50,50,255);
+			text-shadow:0 0 10px rgb(50,50,255);
+		}
+		#start.hide {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<div id="main">
+		<canvas id="canvas" width=500 height=500>您的浏览器不支持canvas，请更换或升级浏览器</canvas>
+		<div id="start">开始游戏</div>
+	</div>
+
+	<script>
+
+		var raf = window.requestAnimationFrame || 
+			window.webkitRequestAnimationFrame || 
+			window.mozRequestAnimationFrame || 
+			window.msRequestAnimationFrame;
+
+		var caf = window.cancelAnimationFrame || 
+			window.webkitCancelAnimationFrame || 
+			window.mozCancelAnimationFrame || 
+			window.msCancelAnimationFrame;
+
+		var oMain = document.querySelector('#main');
+		var oStart = document.querySelector('#start');
+		var oCan = oMain.querySelector('#canvas');
+		var ctx = oCan.getContext('2d');
+		var stop = false;
+
+		var w = 0, h = 0;
+
+		var params = {
+		/*	plane : {}, // 飞机
+			pMissiles : [], // 自己子弹
+			eMissiles : [], // 敌人子弹
+			enemies : [], // 敌机
+			level_P : 1, // 飞机等级
+			level_E : 1, // 敌人等级
+			bom : [], // 爆炸效果
+			scores : 0, // 分数
+			award : [], // 奖励
+			state : 1, // 游戏状态 0结束 1开始
+			boss : [],
+			bossNum : 0
+		*/
+		};
+
+		function resize(){
+			oCan.width = w = window.innerWidth;
+			oCan.height = h = window.innerHeight;
+		};
+
+		resize();
+		window.onresize = resize;
+
+	/* 返回a，b间的随机整数 */
+		function ranNum(a, b){
+			return Math.round(Math.random()*(b-a)+a);
+		}
+
+	/* 构造飞机 */
+		function Plane(x, y){
+			this.x = x || 0;
+			this.y = y || 0;
+			this.color = 'rgb(0,255,0)';
+			this.life = 10;
+			this.currentLife = 0;
+			this.hurt = false;
+			this.aTime = new Date(); // 辅助奖励生成
+			this.aDuration = ranNum(8000,15000); // 奖励生成的间隔
+		};
+		Plane.prototype.draw = function(){
+			var s = 1.5;
+			ctx.save();
+			ctx.translate(this.x, this.y);
+			ctx.beginPath();
+			ctx.moveTo(0*s, -10*s);
+			ctx.lineTo(-10*s, 10*s);
+			ctx.lineTo(0*s, 5*s);
+			ctx.lineTo(10*s, 10*s);
+			ctx.closePath();
+			ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+			if(this.hurt){
+				ctx.shadowColor = 'rgb(255,0,0)';
+				this.hurt = false;
+			}else{
+				ctx.shadowColor = this.color;
+			};
+			ctx.shadowBlur = 5;
+			ctx.lineWidth = 2;
+			ctx.stroke();
+			ctx.restore();
+
+			this.drawLife();
+		};
+		Plane.prototype.drawLife = function(){
+			ctx.save();
+			ctx.beginPath();
+			ctx.strokeStyle = 'rgba(255,255,255,1)';
+			ctx.shadowBlur = 5;
+			ctx.shadowColor = this.life<=3 ? 'rgb(255,0,0)' : 'rgb(0,255,0)';
+			ctx.lineWidth = 1;
+			var c = this.life<=3 ? 'rgba(120,20,20,0.2)' : 'rgba(20,120,20,0.2)';
+			var color = ctx.createLinearGradient(20, 0, 32, 0);
+			color.addColorStop(0,'rgba(255,255,255,0)');
+			color.addColorStop(0.3,c);
+			color.addColorStop(0.5,'rgba(255,255,255,0.3)');
+			color.addColorStop(0.7,c);
+			color.addColorStop(1,'rgba(255,255,255,0)');
+			ctx.fillStyle = color;
+			ctx.strokeRect(20, h-140, 12, 120);
+			ctx.fillRect(20, h-20-this.currentLife, 12, this.currentLife);
+			ctx.restore();
+
+			if(this.currentLife<this.life*12){
+				this.currentLife += 1;
+				if(this.currentLife>this.life*12){
+					this.currentLife = this.life*12;
+				}
+			}else if(this.currentLife>this.life*12){
+				this.currentLife -= 1;
+				if(this.currentLife<this.life*12){
+					this.currentLife = this.life*12;
+				}
+			};
+		};
+
+	/* 绘制标题 */
+		function drawTitle(){
+			ctx.save();
+			ctx.fillStyle = '#fff';
+			ctx.shadowColor = 'red';
+			ctx.shadowBlur = 15;
+			ctx.font = '40px Microsoft Yahei';
+			ctx.textAlign = 'center';
+			ctx.fillText('飞 机 大 战', w/2, h/5);
+			ctx.restore();
+		};
+		drawTitle();
+
+	/* 初始化 */
+		function init(){
+			if(stop) caf(stop);
+			params = {
+				plane : {}, // 飞机
+				pMissiles : [], // 自己子弹
+				eMissiles : [], // 敌人子弹
+				enemies : [], // 敌机
+				level_P : 1, // 飞机等级
+				level_E : 1, // 敌人等级
+				bom : [], // 爆炸效果
+				scores : 0, // 分数
+				award : [], // 奖励
+				state : 1, // 游戏状态 0结束 1开始
+				boss: [], // boss
+				bossNum : 0 // boss序号
+			};
+			params.plane = new Plane(w/2, h); // 创建飞机
+			autoPlay();
+		};
+
+		oStart.ontouchstart = oStart.onclick = function(){
+			this.className = 'hide';
+			params.state = 0;
+			init();
+		};
+
+	/* 鼠标控制飞机位置 */
+		function mouseMove(e){
+			if(!params.state) return;
+			var e = e || window.event;
+			var mX = e.clientX,
+			mY = e.clientY;
+			params.plane.x = mX;
+			params.plane.y = mY;
+		};
+		document.onmousemove = mouseMove;
+		/* 触摸控制 */
+		document.ontouchstart = function(){
+			document.ontouchmove = function(e){
+				if(!params.state) return;
+				var e = e || window.e;
+				var mX = e.targetTouches[0].clientX,
+				mY = e.targetTouches[0].clientY-50;
+				if(mY<0) mY = 0;
+				params.plane.x = mX;
+				params.plane.y = mY;
+			};
+			document.ontouchend = function(){
+				document.ontouchmove = null;
+				document.ontouchend = null;
+			};
+			return false;
+		};
+
+	/* 构造己方子弹 */
+		function PMissile(type){
+			if(!params.plane) return;
+			var plane = params.plane;
+			var self =this;
+			this.color = 'green';
+			switch(type){
+				case 'S':
+					self.l = 10;
+					self.x = plane.x;
+					self.y = plane.y-20;
+					self.speed = 15;
+				break;
+				case 'ML':
+					self.x = plane.x-15;
+					self.l = 16;
+					self.y = plane.y-15;
+					self.speed = 22;
+				break;
+				case 'MR':
+					self.x = plane.x+15;
+					self.l = 16;
+					self.y = plane.y-15;
+					self.speed = 22;
+				break;
+			};
+			params.pMissiles.push(this);
+		};
+		PMissile.prototype.draw = function(index){
+			ctx.save();
+			ctx.beginPath();
+			ctx.lineWidth = 4;
+			ctx.shadowBlur = 5;
+			ctx.shadowColor = this.color;
+			ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+
+			ctx.moveTo(this.x, this.y-this.l/2);
+			ctx.lineTo(this.x, this.y+this.l/2);
+
+			ctx.stroke();
+			ctx.restore();
+
+			this.update(index);
+		};
+		PMissile.prototype.update = function(index){
+			this.y -= this.speed;
+			if(this.y < 0){
+				params.pMissiles.splice(index,1);
+				return true;
+			};
+			return false;
+		};
+
+	/* 创建己方子弹 */
+		function createPM(level){
+			if(!params.plane.now1) params.plane.now1 = new Date();
+			if(!params.plane.now2) params.plane.now2 = new Date();
+			var now = new Date();
+			var t1 = level<=5 ? 210-(level-1)*35 : 70;
+			var t2 = level<=10 ? 300-(level-6)*35 : 160;
+
+			if(now-params.plane.now1 >= t1){
+				new PMissile('S');
+				params.plane.now1 = now;
+			};
+			if(level>5 && now-params.plane.now2 >= t2){
+				new PMissile('ML');
+				new PMissile('MR');
+				params.plane.now2 = now;
+			};
+		};
+
+	/* 构造敌机 */
+		function Enemy(type){
+			this.type = type;
+			this.x = ranNum(20, w-20);
+			this.y = 0;
+			this.rotate = ranNum(0, 180);
+			this.time = new Date();
+			this.speed = 2;
+			this.duration = this.d = ranNum(600, 800);
+			this.a = ranNum(3,5); // 重力
+			this.color = 'blue';
+			this.life = 1;
+			switch(type){
+				case 'S':
+					this.color = 'rgb(255,0,0)';
+					this.speed = 2;
+					this.duration = this.d = ranNum(500, 700);
+					break;
+				case 'M':
+					var s = ranNum(2,4);
+					s = this.x<=w/2 ? s : -s;
+					this.speed = s;
+					this.life = 2;
+					break;
+			}
+			params.enemies.push(this);
+		};
+		Enemy.prototype.draw = function(index){
+			var self = this;
+			switch(self.type){
+				case 'S': 
+					this.draw_S();
+					this.update_S(index);
+				break;
+				case 'M':
+					this.draw_M();
+					this.update_M(index);
+				break;
+			};
+		};
+		/* 定制 */
+		Enemy.prototype.draw_S = function(){
+			var s = 1;
+			ctx.save();
+			ctx.translate(this.x, this.y);
+			ctx.rotate(this.rotate*Math.PI/180);
+			ctx.beginPath();
+			ctx.moveTo(-10*s, -10*s);
+			ctx.lineTo(-10*s, 10*s);
+			ctx.lineTo(10*s, 10*s);
+			ctx.lineTo(10*s, -10*s);
+			ctx.closePath();
+			ctx.strokeStyle = 'rgba(200,200,200,0.8)';
+			ctx.shadowColor = this.color;
+			ctx.shadowBlur = 5;
+			ctx.lineWidth = 3;
+			ctx.stroke();
+			ctx.restore();
+		};
+		Enemy.prototype.update_S = function(index){
+			this.y += this.speed;
+			this.rotate += 5;
+			this.rotate %= 360;
+			if(this.x<0 || this.x>w || this.y<0 || this.y>h) params.enemies.splice(index, 1);
+		};
+		Enemy.prototype.draw_M = function(){
+			var s = 1.2;
+			ctx.save();
+			ctx.translate(this.x, this.y);
+			ctx.rotate(this.rotate*Math.PI/180);
+			ctx.beginPath();
+			ctx.moveTo(0*s, -10*s);
+			ctx.lineTo(-3*s, -3*s);
+			ctx.lineTo(-10*s, 0*s);
+			ctx.lineTo(-3*s, 3*s);
+			ctx.lineTo(0*s, 10*s);
+			ctx.lineTo(3*s, 3*s);
+			ctx.lineTo(10*s, 0*s);
+			ctx.lineTo(3*s, -3*s);
+			ctx.closePath();
+			ctx.strokeStyle = 'rgba(200,200,200,0.8)';
+			ctx.shadowColor = this.color;
+			ctx.shadowBlur = 5;
+			ctx.lineWidth = 3;
+			ctx.stroke();
+			ctx.restore();
+		};
+		Enemy.prototype.update_M = function(index){
+			this.rotate += 5;
+			this.rotate %= 360;
+			this.x += this.speed;
+			this.y += this.a;
+			this.a -=0.03;
+			if(this.x<0 || this.x>w || this.y<0 || this.y>h) params.enemies.splice(index, 1);
+		};
+
+	/* 创建敌机 */
+		function createEnemy(level){
+			if(!params.plane.eNow1) params.plane.eNow1 = new Date();
+			if(!params.plane.eNow2) params.plane.eNow2 = new Date();
+			var now = new Date();
+			var t1 = level<=6 ? 1000-(level-1)*120 : 400;
+			var t2 = level<=10 ? 1400-(level-1)*120 : 320;
+
+			if(now-params.plane.eNow1 >= t1){
+				new Enemy('S');
+				params.plane.eNow1 = now;
+			};
+			if(now-params.plane.eNow2 >= t2){
+				new Enemy('M');
+				params.plane.eNow2 = now;
+			};
+		};
+
+	/* 构造Boss */
+		function Boss(type){
+			this.type = type;
+			this.x = ranNum(20, w-20);
+			this.y = 0;
+			this.rotate = ranNum(0, 180);
+			this.time = new Date();
+			this.speed = 1;
+			this.duration = this.d = ranNum(5000, 7000);// 每一波的间隔
+			//this.a = ranNum(5,9); // 重力
+			this.color = 'rgb(255,0,255)';
+			this.life = 500;
+			this.currentLife = 0;
+			this.num = 5; // 每一波的子弹次数
+			this.d1 = 300; // 每次的间隔
+			this.t1 = new Date();
+			this.size = 6;
+			this.cBox = {x:this.size*10+2, y:this.size*10+2};
+			switch(type){
+				case 'A':
+					break;
+				case 'B':
+					this.life = 500;
+					this.duration = this.d = 6000;
+					this.num = 96; // 每一波的子弹次数
+					this.d1 = 30; // 每次的间隔
+					break;
+			}
+			this.ratio = this.life/500; // 绘制血条时用
+			params.boss.push(this); 
+		};
+		Boss.prototype.draw = function(index){
+			this.drawLife();
+			switch(this.type){
+				case 'A':
+					this.draw_A();
+					this.update_A(index);
+					break;
+				case 'B':
+					this.draw_B();
+					this.update_A(index);
+					break;
+			}
+		};
+		Boss.prototype.drawLife = function(){
+			var q = w*0.5/500; // 血条相对于w一半的比例
+			ctx.save();
+			ctx.beginPath();
+			ctx.strokeStyle = 'rgba(255,255,255,1)';
+			ctx.shadowBlur = 5;
+			ctx.shadowColor = this.life<=20 ? 'rgb(255,0,0)' : 'rgb(0,255,0)';
+			ctx.lineWidth = 1;
+			var c = this.life<=20 ? 'rgba(120,10,10,0.5)' : 'rgba(255,50,20,0.5)';
+			ctx.fillStyle = c;
+			ctx.strokeRect((w-500*q)/2, 30, 500*q, 20);
+			ctx.fillRect((w-500*q)/2, 30, this.currentLife/this.ratio*q, 20);
+			ctx.restore();
+
+			if(this.currentLife<this.life){
+				this.currentLife += 1;
+				if(this.currentLife>this.life){
+					this.currentLife = this.life;
+				}
+			}else if(this.currentLife>this.life){
+				this.currentLife -= 1;
+				if(this.currentLife<this.life){
+					this.currentLife = this.life;
+				}
+			};
+		};
+		Boss.prototype.draw_A = function(){
+			var s = this.size;
+			ctx.save();
+			ctx.translate(this.x, this.y);
+			ctx.rotate(this.rotate*Math.PI/180);
+			ctx.lineWidth = 3;
+			ctx.strokeStyle = '#fff';
+			ctx.shadowBlur = 5;
+			ctx.shadowColor = this.color;
+			ctx.beginPath();
+			ctx.moveTo(0, -10*s);
+			ctx.lineTo(-2*s, -4*s);
+			ctx.lineTo(-7*s, -7*s);
+			ctx.lineTo(-4*s, -2*s);
+			ctx.lineTo(-10*s, 0);
+			ctx.lineTo(-4*s, 2*s);
+			ctx.lineTo(-7*s, 7*s);
+			ctx.lineTo(-2*s, 4*s);
+			ctx.lineTo(0, 10*s);
+			ctx.lineTo(2*s, 4*s);
+			ctx.lineTo(7*s, 7*s);
+			ctx.lineTo(4*s, 2*s);
+			ctx.lineTo(10*s, 0*s);
+			ctx.lineTo(4*s, -2*s);
+			ctx.lineTo(7*s, -7*s);
+			ctx.lineTo(2*s, -4*s);
+			ctx.closePath();
+			ctx.stroke();
+			ctx.restore();
+		};
+		Boss.prototype.update_A = function(index){
+			this.x += this.speed;
+			if(this.y < h/5) this.y += 1;
+			if(params.state){
+				if(this.x < 10 || this.x > w-10) this.speed = -this.speed;
+			}else{
+				if(this.x < -10 || this.x > w+10 ) params.boss.splice(index, 1);
+			};
+			this.rotate += 0.5;
+			this.rotate %= 360;
+		};
+		Boss.prototype.draw_B = function(){
+			var s = this.size;ctx.save();
+			ctx.save();
+			ctx.translate(this.x, this.y);
+			ctx.rotate(this.rotate*Math.PI/180);
+			ctx.lineWidth = 3;
+			ctx.strokeStyle = '#fff';
+			ctx.shadowBlur = 5;
+			ctx.shadowColor = this.color;
+			ctx.beginPath();
+			for(var i=0; i<6; i++){
+				ctx.rotate(60*Math.PI/180);
+				ctx.arc(5*s,0,5*s,0,-Math.PI,false);
+			}
+			ctx.closePath();
+			ctx.stroke();
+			ctx.restore();
+		};
+
+	/* 生成Boss */
+		function createBoss(){
+			if(params.bossNum<1 && params.scores>=100 && params.scores<101){
+				new Boss('A');
+				params.bossNum++;
+			};
+			if(params.bossNum<2 && params.scores>=280 && params.scores<281){
+				new Boss('B');
+				params.bossNum++;
+			};
+		};
+
+	/* 构造敌机子弹 */
+		function EMissile(enemy, style){
+			var style = style || {};
+			this.l = style.l || 6; // 长度
+			this.x = style.x || enemy.x; // 坐标
+			this.y = style.y || enemy.y;
+			this.speed = style.speed || 4; // 速度
+			this.angle = style.angle || 90*Math.PI/180; // 敌机与己方的角度
+			this.color = style.color || enemy.color; // 颜色
+			this.type = style.type || enemy.type; // 类型
+			switch(this.type){
+				case 'S':
+					this.angle = getAngle(enemy, params.plane);
+					break;
+				case 'M':
+					this.speed = style.speed || 6;
+					break;
+			}
+			params.eMissiles.push(this);
+		};
+		EMissile.prototype.draw = function(index){
+			ctx.save();
+			ctx.lineWidth = 4;
+			var point = getPoint(this.angle, this.l);
+			var x1 = this.x-point.x/2;
+			ctx.beginPath();
+			ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+			ctx.shadowColor = this.color;
+			ctx.shadowBlur = 5;
+			ctx.moveTo(this.x-point.x/2, this.y-point.y/2);
+			ctx.lineTo(this.x+point.x/2, this.y+point.y/2);
+			ctx.stroke();
+			ctx.restore();
+			switch(this.type){
+				case 'S': this.update(index); break;
+				case 'M': this.update(index); break;
+			};
+		};
+		EMissile.prototype.update = function(index){
+			var point = getPoint(this.angle, this.speed);
+			this.x += point.x;
+			this.y += point.y;
+			if(this.x<0 || this.x>w || this.y<0 || this.y>h){
+				params.eMissiles.splice(index, 1);
+			}
+		};
+
+	/* 创建敌军子弹 */
+		function createEM(level){
+			var enemy = params.enemies;
+			var l = params.enemies.length;
+			if(l == 0) return;
+			for(var i=l-1; i>=0; i--){
+				var duration = enemy[i].duration;
+				var now = new Date();
+
+				if(now-enemy[i].time < duration) continue;
+
+				level = Math.min(level, 10);
+				var d = Math.round(enemy[i].d/(level*0.1));
+
+				switch(enemy[i].type){
+					case 'S':
+						d = Math.round(enemy[i].d/(level*0.03));
+						break;
+					case 'M':
+						break;
+				};
+				enemy[i].duration = d;
+			
+				new EMissile(enemy[i]);
+
+				enemy[i].time = now;
+			}
+		};
+
+	/* 创建Boss子弹 */
+		function createBM(){
+			var boss = params.boss;
+			var l = params.boss.length;
+			if(l == 0) return;
+			for(var i=l-1; i>=0; i--){
+				var duration = boss[i].duration;
+				var now = new Date();
+				switch(boss[i].type){
+					case 'A':
+						if(now-boss[i].time >= duration){
+							boss[i].num = 5;
+							boss[i].time = now;
+						};
+						if(now-boss[i].t1 >= boss[i].d1 && boss[i].num > 0){
+							boss[i].num--;
+							new EMissile(boss[i],{type:'M',angle:150*Math.PI/180,speed:4});
+							new EMissile(boss[i],{type:'M',angle:115*Math.PI/180,speed:4});
+							new EMissile(boss[i],{type:'M',angle:90*Math.PI/180,speed:4});
+							new EMissile(boss[i],{type:'M',angle:65*Math.PI/180,speed:4});
+							new EMissile(boss[i],{type:'M',angle:40*Math.PI/180,speed:4});
+							boss[i].t1 = now;
+						};
+						break;
+					case 'B':
+						if(now-boss[i].time >= duration){
+							boss[i].num = 96;
+							boss[i].time = now;
+						};
+						if(now-boss[i].t1 >= boss[i].d1 && boss[i].num > 0){
+							boss[i].num--;
+							new EMissile(boss[i],{type:'M',angle:(150+boss[i].num*15)*Math.PI/180,speed:3});
+							boss[i].t1 = now;
+						};
+						break;
+				}
+				
+			};
+		}
+
+	/* 获取弧度 */
+		function getAngle(enemy, plane){
+			var x = plane.x - enemy.x,
+			y = plane.y - enemy.y;
+			if(x == 0){
+				return y<0 ? 270*Math.PI/180 : 90*Math.PI/180;
+			}else if(x<0){
+				return Math.atan(y/x)+Math.PI;
+			}else{
+				return Math.atan(y/x);
+			};
+		}
+	/* 获取对应弧度上的点的坐标 */
+		function getPoint(angle, l){
+			return {
+				'x' : Math.cos(angle)*l,
+				'y' : Math.sin(angle)*l
+			}
+		};
+
+	/* 构造爆炸效果 */
+		function Bom(obj, style){
+			var style = style || {};
+			this.x = style.x || obj.x;
+			this.y = style.y || obj.y;
+			this.color = style.color || obj.color;
+			this.r = 5;
+			this.size = style.size || 1;
+			params.bom.push(this);
+		};
+		Bom.prototype.draw = function(){
+			ctx.save();
+			ctx.beginPath();
+			ctx.lineWidth = 3;
+			ctx.strokeStyle = 'rgba(200,200,200,0.8)';
+			ctx.shadowBlur = 5;
+			ctx.shadowColor = this.color;
+			ctx.arc(this.x, this.y, this.r, 0, 2*Math.PI, false);
+			ctx.stroke();
+			ctx.restore();
+		};
+		Bom.prototype.update = function(index){
+			this.r += 1*this.size;
+			if(this.r>=20*this.size) params.bom.splice(index, 1);
+		};
+
+	/* 构造奖励 */
+		function Award(type){
+			this.type = type;
+			this.x = ranNum(20, w-20);
+			this.y = 0;
+			this.sX = ranNum(2,5)/4;
+			this.sY = ranNum(2,5)/4;
+			this.timeout = false;
+			this.now = new Date();
+
+			params.award.push(this);
+		};
+		Award.prototype.draw = function(){
+			switch(this.type){
+				case 'S': // strong
+					this.draw_S();
+					break;
+				case 'L': // life
+					this.draw_L();
+					break;
+				case 'K': // kill
+					this.draw_K();
+					break;
+			}
+		};
+		Award.prototype.draw_S = function(){
+			var s = 0.8;
+			ctx.save();
+			ctx.translate(this.x, this.y);
+			ctx.beginPath();
+			ctx.lineWidth = 1.5;
+			ctx.strokeStyle = 'rgba(200,200,200,0.8)';
+			ctx.shadowBlur = 3;
+			ctx.shadowColor = 'rgb(0,255,0)';
+			ctx.moveTo(6*s, -10*s);
+			ctx.lineTo(-6*s, -2*s);
+			ctx.lineTo(-2*s, 2*s);
+			ctx.lineTo(-6*s, 10*s);
+			ctx.lineTo(6*s, 2*s);
+			ctx.lineTo(2*s, -2*s);
+			ctx.closePath();
+			ctx.stroke();
+			ctx.restore();
+		};
+		Award.prototype.draw_L = function(){
+			var s = 0.8;
+			ctx.save();
+			ctx.translate(this.x, this.y);
+			ctx.beginPath();
+			ctx.lineWidth = 1.5;
+			ctx.strokeStyle = 'rgba(200,200,200,0.8)';
+			ctx.shadowBlur = 3;
+			ctx.shadowColor = 'rgb(0,255,0)';
+			ctx.moveTo(-3*s, -10*s);
+			ctx.lineTo(-3*s, -3*s);
+			ctx.lineTo(-10*s, -3*s);
+			ctx.lineTo(-10*s, 3*s);
+			ctx.lineTo(-3*s, 3*s);
+			ctx.lineTo(-3*s, 10*s);
+			ctx.lineTo(3*s, 10*s);
+			ctx.lineTo(3*s, 3*s);
+			ctx.lineTo(10*s, 3*s);
+			ctx.lineTo(10*s, -3*s);
+			ctx.lineTo(3*s, -3*s);
+			ctx.lineTo(3*s, -10*s);
+			ctx.closePath();
+			ctx.stroke();
+			ctx.restore();
+		};
+		Award.prototype.draw_K = function(){
+			var s = 0.8;
+			ctx.save();
+			ctx.translate(this.x, this.y);
+			ctx.lineWidth = 1.5;
+			ctx.strokeStyle = 'rgba(200,200,200,0.8)';
+			ctx.shadowBlur = 3;
+			ctx.shadowColor = 'rgb(0,255,0)';
+			ctx.beginPath();
+			ctx.arc(0,0,2*s,0,2*Math.PI,true);
+			ctx.stroke();
+			for(var i=0; i<3; i++){
+				ctx.rotate(120*Math.PI/180);
+				ctx.beginPath();
+				ctx.moveTo(10*s, 0);
+				ctx.arc(0,0,10*s,0,-60*Math.PI/180,true);
+				ctx.lineTo(2*s, -4*s);
+				ctx.arc(0,0,4*s,-60*Math.PI/180,0,false);
+				ctx.closePath();
+				ctx.stroke();
+			}
+			ctx.restore();
+		};
+		Award.prototype.update = function(index){
+			if(new Date()-this.now >= 15000 && !this.timeout) this.timeout = true;
+			this.x += this.sX;
+			this.y += this.sY;
+			if(!this.timeout){
+				if(this.x<=0 || this.x>=w){
+					this.sX = -this.sX;
+				}
+				if(this.y<=0 || this.y>=h){
+					this.sY = -this.sY;
+				}
+			}else{
+				if(this.x<=-10 || this.x>=w+10 || this.y<=-10 || this.y>=h+10){
+					params.award.splice(index, 1);
+				}
+			};
+		};
+
+	/* 添加奖励 */
+		function addAward(){
+			var now = new Date();
+			var p = params.plane;
+			if(now-p.aTime>=p.aDuration){
+				var ran = Math.random();
+				if(ran>=0.1){
+					new Award('K');
+				}else if(ran>0.1 && ran<=0.6){
+					new Award('S');
+				}else if(ran>0.6 && ran<0.8){
+					new Award('L');
+				}else{
+				}
+				params.plane.aTime = now;
+				params.plane.aDuration = ranNum(8000,15000);
+			}
+		};
+
+	/* 渲染绘制 */
+		function render(){
+			// 绘制飞机
+			if(params.state) params.plane.draw();
+
+			var eL = params.enemies.length;
+			var pML = params.pMissiles.length;
+			var eML = params.eMissiles.length;
+			var bomL = params.bom.length;
+			var aL = params.award.length;
+			var bL = params.boss.length;
+			// 绘制敌机
+			if(eL>0){
+				for(var i=eL-1; i>=0; i--){
+					params.enemies[i].draw(i);
+				};
+			}
+			// 绘制Boss
+			if(bL>0){
+				for(var i=bL-1; i>=0; i--){
+					params.boss[i].draw(i);
+				};
+			}
+			// 绘制己方子弹
+			if(pML>0){
+				for(var i=pML-1; i>=0; i--){
+					params.pMissiles[i].draw(i);
+				};
+			}
+			// 绘制敌方子弹
+			if(eML>0){
+				for(var i=eML-1; i>=0; i--){
+					params.eMissiles[i].draw(i);
+				}
+			}
+			// 绘制爆炸效果
+			if(bomL>0){
+				for(var i=bomL-1; i>=0; i--){
+					params.bom[i].draw();
+					params.bom[i].update(i);
+				}
+			}
+			// 绘制奖励
+			if(aL>0){
+				for(var i=aL-1; i>=0; i--){
+					params.award[i].draw();
+					params.award[i].update(i);
+				}
+			}
+		};
+
+	/* 碰撞检测 */
+		function check(){
+			var plane = params.plane;
+			var eL = 0, pML = 0, eML = 0, al = 0, bL = 0;
+			/* 己方子弹与敌机 */
+			if(eL=params.enemies.length){
+				for(var i=eL-1; i>=0; i--){
+					//console.log(eL);
+					var e = params.enemies[i];
+					if(pML=params.pMissiles.length){
+						for(var j=pML-1; j>=0; j--){
+							var pM = params.pMissiles[j];
+							if(Math.abs(e.x-pM.x)<=20 && Math.abs(e.y-pM.y)<=20){
+								params.pMissiles.splice(j, 1);
+								new Bom(pM, {size:0.4});
+								if(--e.life <= 0){
+									new Bom(e);
+									params.enemies.splice(i, 1);
+									params.scores += 1;
+								};
+								break;
+							};
+						};
+					}else{
+						break;
+					};
+				}
+			};
+			/* 己方子弹与Boss */
+			if(bL=params.boss.length){
+				for(var i=bL-1; i>=0; i--){
+					//console.log(eL);
+					var boss = params.boss[i];
+					if(pML=params.pMissiles.length){
+						for(var j=pML-1; j>=0; j--){
+							var pM = params.pMissiles[j];
+							if(Math.abs(boss.x-pM.x)<=boss.cBox.x && Math.abs(boss.y-pM.y)<=boss.cBox.y){
+								params.pMissiles.splice(j, 1);
+								new Bom(pM, {size:0.4});
+								if(--boss.life <= 0){
+									new Bom(boss,{size:5});
+									params.boss.splice(i, 1);
+									params.scores += 50;
+								};
+								break;
+							};
+						};
+					}else{
+						break;
+					};
+				}
+			};
+			/* 敌方子弹与自己 */
+			if(eML=params.eMissiles.length){
+				for(var i=eML-1; i>=0; i--){
+					var eM = params.eMissiles[i];
+					if(Math.abs(plane.x-eM.x)<=15 && Math.abs(plane.y-eM.y)<=15){
+						params.eMissiles.splice(i, 1);
+						plane.life -= 1;
+						plane.hurt = true;
+						if(plane.life<=0){
+							params.state = 0;
+							oStart.className = '';
+							new Bom(plane, {size:1.5});
+							return;
+						};
+						new Bom(eM, {size:0.4});
+					}
+				}
+			};
+			/* 敌机与自己 */
+			if(eL=params.enemies.length){
+				for(var i=eL-1; i>=0; i--){
+					var e = params.enemies[i];
+					if(Math.abs(plane.x-e.x)<=30 && Math.abs(plane.y-e.y)<=30){
+						params.enemies.splice(i, 1);
+						plane.life -= 2;
+						plane.hurt = true;
+						new Bom(e);
+						if(plane.life<=0){
+							params.state = 0;
+							oStart.className = '';
+							new Bom(plane, {size:1.5});
+							return;
+						};
+						new Bom(plane, {size:0.4, color:'red'});
+					}
+				}
+			};
+			/* 自己与奖励 */
+			if(aL=params.award.length){
+				for(var i=aL-1; i>=0; i--){
+					var award = params.award[i];
+					if(Math.abs(plane.x-award.x)<=25 && Math.abs(plane.y-award.y)<=25){
+						switch(award.type){
+							case 'S': // 增加子弹威力
+								params.level_P += 1;
+								if(params.level_P>10) params.level_P = 10;
+								break;
+							case 'L': // 回复生命
+								plane.life += 2;
+								if(plane.life>10) plane.life = 10;
+								break;
+							case 'K': // 清空所有敌方单位
+								effectK(award);
+								break;
+						}
+						params.award.splice(i, 1);
+					}
+				}
+			}
+		};
+
+		/* 核弹效果 */
+		function effectK(obj){
+			var eL = params.enemies.length;
+			var bL = params.boss.length;
+			var x = obj.x, y = obj.y;
+			if(eL){  // 清空敌机
+				params.scores += eL;
+
+				ctx.save();
+				ctx.beginPath();
+				ctx.lineWidth = 1;
+				ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+				for(var i=eL-1; i>=0; i--){
+					var e = params.enemies[i];
+					ctx.moveTo(x, y);
+					ctx.lineTo(e.x, e.y);
+					new Bom(e);
+				};
+				params.enemies = [];
+				ctx.stroke();
+				ctx.restore();
+			};
+			if(bL){ // boss减血
+				for(var i=bL-1; i>=0; i--){
+					var boss = params.boss[i];
+					boss.life -= 30;
+					if(boss.life<=0){
+						params.boss.splice(i,1);
+						new Bom(boss,{size:5});
+						params.scores += 50;
+					}
+				}
+			};
+			params.eMissiles = []; // 清空敌方子弹
+			// 天女散花
+			for(var i=0; i<30; i++){
+				new Bom({},{
+					size:1,
+					color:'#fff',
+					x:ranNum(5,w-5),
+					y:ranNum(5,h-5),
+				});
+			};
+		};
+
+	/* 绘制分数 */
+		function score(){
+			var str = '得分： ' + params.scores;
+
+			ctx.save();
+			ctx.beginPath();
+			ctx.font = "20px 'Microsoft Yahei'";
+			ctx.textAlign = 'start';
+			ctx.fillStyle = 'white';
+			ctx.shadowBlur = 10;
+			ctx.shadowColor = 'blue';
+			ctx.fillText(str, 10, 50);
+			/* 绘制结束语 */
+			if(!params.state){
+				ctx.font = "30px 'Microsoft Yahei'";
+				ctx.textAlign = 'center';
+				ctx.shadowColor = 'red';
+				ctx.fillText('Game Over', w/2, h/5*4);
+			}
+			ctx.restore();
+			// 结束也要绘制标题
+			if(!params.state) drawTitle();
+
+			/* 更新等级 */
+			params.level_E = Math.floor(params.scores/100)+1;
+			params.level_E = Math.min(params.level_E, 10);
+
+		}
+
+	/* 自动运行 */
+		function autoPlay(){
+			ctx.clearRect(0,0,w,h);
+			render(); // 渲染
+			if(params.state){
+				createPM(params.level_P); // 创建己方子弹
+				createEnemy(params.level_E); // 创建敌机
+				createEM(params.level_E); // 创建敌机子弹
+				createBoss() // 创建Boss
+				createBM() // 创建Boss子弹
+				addAward(); // 添加奖励
+				check(); // 碰撞检测
+			};
+			score(); // 绘制分数
+			stop = raf(autoPlay);
+		};
+
+	</script>
+</body>
+</html>
