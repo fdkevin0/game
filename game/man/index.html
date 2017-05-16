@@ -66,6 +66,7 @@ h2 {
 <h2>游戏</h2>
 
 <script>
+// 地图
 var LEVELS = [
 	["                                                                                ",
 		"                                                                                ",
@@ -550,11 +551,14 @@ var arrowCodes = {
 	39: "right"
 };
 
-function trackKeys(codes) {
+function trackKeys(codes)
+{
 	var pressed = Object.create(null);
 
-	function handler(event) {
-		if (codes.hasOwnProperty(event.keyCode)) {
+	function handler(event)
+	{
+		if (codes.hasOwnProperty(event.keyCode))
+		{
 			var down = event.type == "keydown";
 			pressed[codes[event.keyCode]] = down;
 			event.preventDefault();
