@@ -1,0 +1,315 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <link href="assets/assets.min.css" rel="stylesheet">
+  <link href="assets/icon.ico" rel="shortcut icon" type="image/x-icon">
+	<title>打飞机</title>
+	<style>
+        html,body,h1,h3{margin: 0;padding: 0}
+		#content{
+			width: 320px;
+			height: 568px;
+			position: relative;
+			margin: 0 auto;
+			overflow: hidden;
+		}
+		#start_box{
+            width: 100%;
+			display: block;	
+			width: 320px;
+			height: 568px;
+			background: url(image/开始背景.png) no-repeat;
+		}
+		#btn{
+			width: 120px;
+			height: 25px;
+			position: absolute;
+			left: 100px;
+			top: 450px;
+		}
+		#main_box{
+            width: 100%;
+			width: 320px;
+			height: 568px;
+			background: url(image/background_1.png);
+			display:none;
+            overflow: hidden;
+		}
+        #over{
+            position: relative;
+            text-align: center;
+            margin-top: 270px;
+            z-index: 100;
+            display: none;
+        }
+        #over:hover{
+            cursor: pointer;
+        }
+	</style>
+		
+	<script src = "jquery-1.11.3.min.js"></script>
+	
+</head>
+<body>
+	<div id = "content">
+		<div id = "start_box">
+            <a id = "btn" class="btn btn-success" style="padding: 3px">点击进入</a>
+			<!-- <button id = "btn">开始游戏</button> -->
+		</div>
+		<div id = "main_box">
+            <h3 style="position: absolute;z-index:100">得分:<span id="score">0</span></h3>
+            <h1 id="over">GAME OVER</h1>
+		</div>
+
+	</div>
+</body>
+</html>
+
+<script>
+	var gameOver = false,   //游戏进行开关
+	    timer,              //定时器
+        $myPlane,            //我的飞机
+        $mainDiv = $("#main_box"),
+        bgPositionY = 0,    //背景Y值
+        bullets = [],       //我的子弹组
+        bulletMark = 0,      //用来调整子弹发射频率
+        enemys = [],        //敌机组
+        timerMake = 0,      //调整敌机创建频率
+        planeMake = 0,      //调整敌机创建频率
+        score = 0,          //得分
+        //主界面的值
+        contentWidth=320,
+        contentHeight=568;
+    //点击游戏开始
+	$("#btn").click(function(){
+        //游戏开始更换界面
+		$("#main_box,#start_box").toggle();
+        //创建我的飞机
+		createMyPlane();
+        //移动我的飞机
+		moveMyPlane();
+		//游戏开始
+        begin();
+	});
+
+    //创建我的飞机
+    function createMyPlane(){
+        $myPlane = $('<img src="image/我的飞机.gif" style="width: 15%;"/>').appendTo($mainDiv);
+        $myPlane.css({"position":"absolute","top":"500px","left":"125px"});
+    }
+
+    //移动我的飞机
+    function moveMyPlane(){
+        //监听鼠标移动
+        $mainDiv.bind("mousemove",function(e){
+            //鼠标所在值 - 界面相对浏览器左边的值 - 飞机宽度的一半
+            var left = parseInt(e.pageX - $mainDiv.offset().left - $myPlane.outerWidth()/2);
+            //鼠标所在值 - 飞机高度的一半
+            var top = parseInt(e.pageY - $myPlane.outerHeight()/2);
+
+            //left和top限制：不能超出背景框的范围
+            if(left<0){
+                left = 0;
+            }
+            if(left>contentWidth - $myPlane.outerWidth()){
+                left = contentWidth - $myPlane.outerWidth();
+            }
+            if(top<0){
+                top = 0
+            }
+            if(top>contentHeight - $myPlane.outerHeight()){
+                top = contentHeight - $myPlane.outerHeight();
+            }
+            $myPlane.css({"left":left+'px',"top":top+'px'})
+        })
+    }
+
+    //游戏开始
+	function begin(){
+		clearInterval(timer);
+		timer = setInterval(function(){
+			if(gameOver){
+                //游戏结束
+                $mainDiv.unbind("mousemove");
+                $("#over").toggle();
+                clearInterval(timer);
+			}
+            //移动背景
+			moveBackground();
+            //创建子弹
+			createBullets();
+            //移动子弹
+			moveBullets();
+            //创建敌机
+			createEnemy();
+            //移动敌机
+			moveEnemy();
+            //碰撞检测
+			checkPZ();
+		},20)
+	}
+
+    //背景移动
+    function moveBackground(){
+        $mainDiv.css("background-positionY",++bgPositionY +"px");
+        if(bgPositionY==568){
+            bgPositionY=0;
+        }
+    }
+
+    //创建子弹
+    function createBullets(){
+        bulletMark++;
+        if(bulletMark%10 == 0){
+            var $bullet = $('<img src="image/bullet1.png">').appendTo($mainDiv);
+            var left = $myPlane.position().left + $myPlane.outerWidth()/2 +'px';
+            var top = $myPlane.position().top + 'px';
+            $bullet.css({"position":"absolute","left":left,"top":top});
+            bullets.push($bullet);
+        }
+    }
+
+    //移动子弹
+    function moveBullets(){
+        if(bullets.length>0){
+            for(var i=0;i<bullets.length;i++){
+                $(bullets[i]).css("top",$(bullets[i]).position().top-20+"px");
+                //子弹已经飞出最上端，从页面中移除
+                if($(bullets[i]).position().top<-14){
+                    $(bullets[i]).remove();
+                    bullets.splice(i,1);
+                }
+            }
+        }
+    }
+
+    //创建敌机
+    function createEnemy(){
+        timerMake++;
+        if(timerMake%10==0){
+            planeMake++;
+            timerMake = 0;
+            if(planeMake == 20){
+                //随机飞机出现位置
+                var top = -170+"px";
+                var left =left=Math.random()*(contentWidth-110)+"px";
+                var enemy = $('<img src="image/enemy2_fly_1.png">').appendTo($mainDiv).css({"position":"absolute","top":top,"left":left,"z-index":10});
+                enemy.srcBoom = "image/大飞机爆炸.gif";
+                //大飞机血量
+                enemy.blood = 10;
+                //大飞机分数
+                enemy.score = 500;
+                enemys.push(enemy);
+                planeMake = 0;
+            }
+            if(planeMake%5==0){
+                var top = -170 +"px";
+                var left =left=Math.random()*(contentWidth-46)+"px";
+                var enemy = $('<img src="image/enemy3_fly_1.png">').appendTo($mainDiv).css({"position":"absolute","top":top,"left":left,"z-index":20});
+                enemy.srcBoom = "image/中飞机爆炸.gif";
+                //中飞机血量
+                enemy.blood = 5;
+                //中飞机分数
+                enemy.score = 300;
+                enemys.push(enemy);
+            }else{
+                var top = -170 +"px";
+                var left =left=Math.random()*(contentWidth-34)+"px";
+                var enemy = $('<img src="image/enemy1_fly_1.png">').appendTo($mainDiv).css({"position":"absolute","top":top,"left":left,"z-index":30});
+                enemy.srcBoom = "image/小飞机爆炸.gif";
+                //小飞机血量
+                enemy.blood = 1;
+                //小飞机分数
+                enemy.score = 100;
+                enemys.push(enemy);
+            }
+        }
+    }
+
+    //移动敌机
+    function moveEnemy(){
+        if(enemys.length>0){
+            for(var i=0;i<enemys.length;i++){
+                if(enemys[i].isDelete){
+                    //此飞机已被打死，不移动他。
+                    //启动计数,每次定时器执行的时候，计数加一；
+                    //当达到 30 时，清理该飞机（ removechild   splice数组）
+                    enemys[i].deleteCount+=1;
+                    if(enemys[i].deleteCount==30){
+                        $(enemys[i]).remove();
+                        enemys.splice(i,1);
+                    }
+                }else{
+                    //飞机超出荧幕清理飞机
+                    if($(enemys[i]).position().top>contentHeight){
+                        $(enemys[i]).remove();
+                        enemys.splice(i,1);
+                    }
+                    //飞机移动
+                    $(enemys[i]).css("top",$(enemys[i]).position().top + 1 +"px");
+                }
+            }
+        }
+    }
+
+    //碰撞检测
+    function checkPZ(){
+        //子弹与敌人
+        for(var i=0;i<bullets.length;i++){
+            for(var j=0;j<enemys.length;j++){
+                //没有被子弹打到的敌机
+                if(!enemys[j].isDelete){
+                    //子弹的右边 大于 敌机的 左边
+                    //子弹的左边 小于 敌机的右边
+                    if ($(bullets[i]).position().left + $(bullets[i]).outerWidth() > $(enemys[j]).position().left && $(bullets[i]).position().left < $(enemys[j]).position().left + $(enemys[j]).outerWidth())
+                    {
+                        //子弹的下边 大于 敌机的上边
+                        //子弹的上边 小于 敌机的下边
+                        if ($(bullets[i]).position().top + $(bullets[i]).outerHeight() > $(enemys[j]).position().top && $(bullets[i]).position().top < $(enemys[j]).position().top + $(enemys[j]).outerHeight())
+                        {
+                            //打到敌机,血量减一
+                            enemys[j].blood--;
+                            //子弹消失
+                            $(bullets[i]).remove();
+                            bullets.splice(i,1);
+                            //血量0时爆炸并且得分
+                            if(enemys[j].blood==0){
+                                score+=enemys[j].score;
+                                $("#score").html(score);
+                                $(enemys[j]).prop("src",enemys[j].srcBoom);
+                                //敌机删除
+                                enemys[j].isDelete=true;
+                                enemys[j].deleteCount=0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //敌机撞毁我方飞机
+        for(var k=0;k<enemys.length;k++){
+            //没有被打中的敌机
+            if(!enemys[k].isDelete){
+                //我方的右边 大于 敌机的左边
+                //我方的左边 小于 敌机的右边
+                if($myPlane.position().left+$myPlane.outerWidth()>$(enemys[k]).position().left&&$myPlane.position().left<$(enemys[k]).position().left+$(enemys[k]).outerWidth())
+                {
+                    //我方的下边 大于 敌机的上边
+                    //我方的上边 小于 敌机的下边
+                    if($myPlane.position().top+$myPlane.outerHeight()>$(enemys[k]).position().top&&$myPlane.position().top<$(enemys[k]).position().top+$(enemys[k]).outerHeight()){
+                        //本机与敌机碰撞
+                        $myPlane.prop("src","image/本方飞机爆炸.gif");
+                        gameOver=true;
+                    }
+                }
+            }
+        }
+    }
+
+    //点击GAME OVER返回主界面
+    $("#over").one("click",function(){
+        window.location.reload();
+    })
+</script>
