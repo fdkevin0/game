@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+  <head>
+    <title>"A Rose is a Rose"</title>
+    <meta charset="utf-8">
+    
+
+    
+    <script>
+      setTimeout(function(){
+        var ga = document.createElement('script');
+        ga.async = true;
+        ga.defer = true;
+        ga.src = 'http://www.google-analytics.com/ga.js';
+        ga.onload = function(){try{_gat._getTracker('UA-19882353-1')._trackPageview();}catch(e){window.console&&console.log("ga fail :'( ");};};
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(ga, s);
+      }, 10);
+    </script>
+    <style>
+      body,html,iframe{
+        margin:0;
+        padding:0;
+        border:0;
+        width:100%;
+        height:100%
+      }
+      iframe{
+        position:absolute;
+        top:0;
+        left:0;
+        padding-top:50px;
+        box-sizing:border-box
+      }
+
+      aside,div,h1,p{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:center;font-size:16px;font-weight:inherit;line-height:22px;padding:0;margin:0;cursor:default}
+      aside,h1{display:inline}
+      a{color:#000;text-decoration:none;border-bottom:1px dashed #000}
+      a:hover{border-bottom:1px solid red}
+      a[href="0"]{text-decoration:line-through;pointer-events:none;border-bottom:0;color:#ccc}
+      .button{float:left;width:40px;height:40px;line-height:40px;text-align:center;padding:0;margin:2px 0 0 10px;border:1px solid #888;border-color:#ddd #888 #888 #ddd;font-family:sans-serif;font-size:30px;font-weight:700;cursor:pointer}
+      .button:hover{color:red;border-bottom-color:#888}
+      .r{margin-right:10px}
+      time{display:none}
+    </style>
+  </head>
+  <body>
+    <script type="demo">
+with(m=Math)C=cos,S=sin,P=pow;O=a.getImageData(0,0,c.height=f=W=256,f);U=O.data;D={};F=[];function J(p){p[5]=Q=0;for(j=3;j--;)if(!D[Q=(p[j]>>=2)+Q*f])D[Q]=F.push(p)}setInterval(function(){for(i=1e3;i--;){c=i%42*1.35;H=T;T=m.random();A=H*2-1;B=T*2-1;J([S(H*7)*(o=13+5/(.2+P(T*4,4)))-T*50,T*550+500,(l=C(H*7))*o,(G=l/7+.5)-T/4,G]);if(A*A+B*B<1)if(c>32){J([(o=.5/(H+.01)-H*300)*C(n=(j=c&1)?6:4)+(w=T*-f)*S(n)+j*630-390,o*S(n)-w*C(n)+999-j*350,C(B+A)*99-j*50,(P(l=1-B*B,f*6)+C(H+T)+P(C((o*H+o+(B>0?w:-w))/25),30)*l-H+2)/5,o/1e3+.7-o*w/3e5]);J([(o=H*45-20)*C(l=c/.86)+(w=T*T)*f*S(l),C(B/2)*99-w*T*60+436,o*S(l)-w*f*C(l),w*.3+.3,T*.7])}else J([(o=A*(2-T)*(80-c*2))*C(c)-(w=99-C(A)*120-C(T)*(f-c*5)+C(P(1-T,7))*50+c*2)*S(c),(B*2-C(P(T,7))+9)*50,o*S(c)+w*C(c),1-T*.7,P(1-T,9)/4])}for(i=0;i<f*f;m[i++]=f)for(l=4;l--;)U[i*4+l]=255;for(c=C(W),s=S(W),j=F.length;j--;){k=F[j],x=k[0]*c+k[2]*s+99,z=k[0]*s-k[2]*c,y=k[1]-z*.4<<8;for(i=3;i--;)if(z<m[p=y-~x+[0,1,f][i]])for(m[p]=z,l=3;l--;)U[p*4+l]=k[l+3]*f}a.putImageData(O,0,0);W+=.03},T=0)
+    </script>
+    <script>
+  
+      (function reload(){var doc=document;var header=doc.getElementsByTagName("header")[0];var iframe=doc.createElement("iframe");doc.body.appendChild(iframe);var iwin=iframe.contentWindow;var idoc=iframe.contentDocument;idoc.open();idoc.close();idoc.write('<!doctype html><head><meta charset="utf-8"><body>');idoc.head.innerHTML="<style>\n"+"html, body { margin: 0; padding: 0; border: 0; width: 100%; height: 100%; }\n"+"</style>\n";idoc.body.innerHTML="\n\t\t"+"<canvas"+' id="c"'+''+"></canvas>\n"+
+      (true?"<script>\x3c/script>\n":"")+"";var Audio=iwin.Audio;iwin.Audio=function(x){return new Audio(x)};if(true){var canvas=idoc.getElementsByTagName("canvas")[0];iwin.a=canvas.getContext("2d");iwin.b=idoc.body;iwin.c=canvas;var p2d=iwin.Path2D;function wrap(ctx){var fill=ctx.fill,clip=ctx.clip,stroke=ctx.stroke;ctx.scale=ctx.scale;ctx.drawFocusIfNeeded=ctx.drawFocusIfNeeded;ctx.ellipse=ctx.ellipse;ctx.fill=function(r){fill.call(ctx,r==="evenodd"?"evenodd":"nonzero")};ctx.stroke=
+        function(p){if(p&&p2d&&p instanceof p2d)stroke.call(ctx,p);else stroke.call(ctx)};ctx.clip=function(p){if(p&&p2d&&p instanceof p2d)clip.call(ctx,p);else clip.call(ctx)};return ctx}if(false){var cvs=iwin.c;var cNode=cvs.cloneNode;cvs.cloneNode=function(){var clone=cNode.apply(cvs,arguments);var cloneGet=clone.getContext;clone.getContext=function(){return wrap(cloneGet.call(clone,"2d"))};return clone};var get=cvs.getContext;cvs.getContext=function(){return wrap(get.call(cvs,"2d"))}}if(true)wrap(iwin.a)}idoc.body.clientWidth;
+        var demo=idoc.createElement("script");var scrpt=doc.querySelector('script[type="demo"]').textContent.replace(/m.location=m.location;/,"top.reload();");if(false)scrpt="A=0,B=0;"+scrpt;demo.textContent=scrpt;idoc.body.appendChild(demo);idoc.close();iframe.contentWindow.focus();var r=doc.createElement("div");r.innerHTML="&#8635;";r.className="button r";r.title="restart just the demo (local, without remote fetch)";window.reload=r.onclick=function(){doc.body.removeChild(iframe);r.parentElement.removeChild(r);
+          iframe=null;r=null;idoc=null;header=null;reload()};var firstLine=doc.getElementsByTagName("div")[0];header.insertBefore(r,firstLine)})();
+    </script>
+  </body>
+</html>
