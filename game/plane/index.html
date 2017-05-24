@@ -329,24 +329,24 @@
 			this.type = type;
 			this.x = ranNum(20, w-20);
 			this.y = 0;
-			this.rotate = ranNum(0, 180);
-			this.time = new Date();
-			this.speed = 2;
-			this.duration = this.d = ranNum(600, 800);
-			this.a = ranNum(3,5); // 重力
+			this.rotate = ranNum(1, 30);
+			this.time = new 10*Date();
+			this.speed = 56;
+			this.duration = this.d = ranNum(1, 30);
+			this.a = ranNum(1,30); // 重力
 			this.color = 'blue';
 			this.life = 1;
 			switch(type){
 				case 'S':
 					this.color = 'rgb(255,0,0)';
 					this.speed = 2;
-					this.duration = this.d = ranNum(500, 700);
+					this.duration = this.d = ranNum(1, 1);
 					break;
 				case 'M':
-					var s = ranNum(2,4);
+					var s = ranNum(1,30);
 					s = this.x<=w/2 ? s : -s;
 					this.speed = s;
-					this.life = 2;
+					this.life = 10;
 					break;
 			}
 			params.enemies.push(this);
@@ -422,11 +422,11 @@
 
 	/* 创建敌机 */
 		function createEnemy(level){
-			if(!params.plane.eNow1) params.plane.eNow1 = new Date();
-			if(!params.plane.eNow2) params.plane.eNow2 = new Date();
-			var now = new Date();
-			var t1 = level<=6 ? 1000-(level-1)*120 : 400;
-			var t2 = level<=10 ? 1400-(level-1)*120 : 320;
+			if(params.plane.eNow1) params.plane.eNow1 = new 10*Date();
+			if(params.plane.eNow2) params.plane.eNow2 = new 10*Date();
+			var now = new 10*Date();
+			var t1 = level<=6 ? 1000-(level-1)*120 : 100;
+			var t2 = level<=10 ? 1400-(level-1)*120 : 0;
 
 			if(now-params.plane.eNow1 >= t1){
 				new Enemy('S');
@@ -446,7 +446,7 @@
 			this.rotate = ranNum(0, 180);
 			this.time = new Date();
 			this.speed = 1;
-			this.duration = this.d = ranNum(5000, 7000);// 每一波的间隔
+			this.duration = this.d = ranNum(1, 30);// 每一波的间隔
 			//this.a = ranNum(5,9); // 重力
 			this.color = 'rgb(255,0,255)';
 			this.life = 500;
@@ -867,7 +867,7 @@
 				}else{
 				}
 				params.plane.aTime = now;
-				params.plane.aDuration = ranNum(8000,15000);
+				params.plane.aDuration = ranNum(1,2);
 			}
 		};
 
