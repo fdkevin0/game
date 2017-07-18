@@ -216,24 +216,24 @@ var LEVELS = [
 	"                                                                                                                 ",
 
 		"           x                                                                                                  ",
-		"                                                                x                    o                         ",
-		"                     x                                                                                       ",
-		"     x                         x          x           x                   x                                        ",
+		"                                                                x                    x                        ",
+		"                     x                                                                                        ",
+		"     x                         x          x           x                   x                                   ",
 		"                                                                                                              ",
 		"             x                                                                                                ",
 		"                                                                                                              ",
 		"                                                                                                              ",
-		"                     x                                                                                        ",
+		"                     x                                           x                                            ",
 		"                                                                                                              ",
 		"                                                                                                              ",
-		"                           x                                                                                  ",
+		"                           x                                    x                                             ",
 		"                                                                                                              ",
 		"                                                                                                              ",
-		"                                                                                                              ",
+		"                                                                x                                             ",
 		"                     x            x                                                                           ",
 		"                                                                                                              ",
-		"            x                                                                                     o               ",
-		"      @                       x                                                          x                          ",
+		"            x                                                                                                 ",
+		"   o  @                       x                                                          x                    ",
 		" xxxxxx                                                                                                       "
 	]
 ];
@@ -482,7 +482,7 @@ Coin.prototype.act = function(step) {
 	this.pos = this.basePos.plus(new Vector(0, wobblePos));
 };
 
-var playerXSpeed = 10;
+var playerXSpeed = 30;
 
 Player.prototype.moveX = function(step, level, keys) {
 	this.speed.x = 0;
@@ -499,7 +499,7 @@ Player.prototype.moveX = function(step, level, keys) {
 };
 
 var gravity = 30;
-var jumpSpeed = 51;
+var jumpSpeed = 17;
 
 Player.prototype.moveY = function(step, level, keys) {
 	this.speed.y += step * gravity;
